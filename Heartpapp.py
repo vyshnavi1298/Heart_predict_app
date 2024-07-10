@@ -2,9 +2,6 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 import pickle
-from sklearn.preprocessing import StandardScaler
-from sklearn.naive_bayes import GaussianNB
-from sklearn.pipeline import Pipeline
 
 # Load the model
 model_path = 'naive_bayes_model.pkl'
@@ -21,7 +18,6 @@ training_columns = [
 # Preprocessing function
 def preprocess_input(data):
     data = data.copy()
-    data = data.drop(columns='Blood Pressure')
     data['Diet'] = data['Diet'].map({'Healthy': 1, 'Average': 2, 'Unhealthy': 3})
     data = pd.get_dummies(data, columns=['Sex'])
     data = data.reindex(columns=training_columns, fill_value=0)
