@@ -1,14 +1,15 @@
 import streamlit as st
 import pandas as pd
 import pickle
-from sklearn.preprocessing import StandardScaler
-from sklearn.pipeline import Pipeline
-from sklearn.naive_bayes import GaussianNB
 
 # Load the trained model
 model_filename = 'naive_bayes_model.pkl'
 with open(model_filename, 'rb') as file:
     model = pickle.load(file)
+
+# Assuming x_train is available and contains the correct columns
+# Define x_train with the correct columns from the training dataset
+x_train = pd.DataFrame(columns=['Age', 'Cholesterol', 'Smoking', 'Physical Activity', 'Diet', 'Stress', 'Sex_Female', 'Sex_Male', 'Systolic BP', 'Diastolic BP'])
 
 # Preprocessing function for prediction
 def preprocess_input(data):
@@ -16,7 +17,11 @@ def preprocess_input(data):
     data = data.drop(columns='Blood Pressure')
     data['Diet'] = data['Diet'].map({'Healthy': 1, 'Average': 2, 'Unhealthy': 3})
     data = pd.get_dummies(data, columns=['Sex'])
-    data[['Sex_Female', 'Sex_Male', 'Systolic BP', 'Diastolic BP']] = data[['Sex_Female', 'Sex_Male', 'Systolic BP', 'Diastolic BP']].astype(int)
+    if 'Sex_Female' not in data.columns:
+        data['Sex_Female'] = 0
+    if 'Sex_Male' not in data.columns:
+        data['Sex_Male'] = 0
+    data[['Systolic BP', 'Diastolic BP']] = data[['Systolic BP', 'Diastolic BP']].astype(int)
     for col in x_train.columns:
         if col not in data.columns:
             data[col] = 0
