@@ -1,9 +1,3 @@
-#!/usr/bin/env python
-# coding: utf-8
-
-# In[ ]:
-
-
 import streamlit as st
 import pandas as pd
 import numpy as np
@@ -47,7 +41,11 @@ input_data = pd.DataFrame({
     'Sex_Male': [sex_map[sex][1]]
 })
 
+# Reorder the columns to match the training data
+input_data = input_data[['Age', 'Cholesterol', 'Max Heart Rate', 'Resting ECG', 
+                         'Exercise Induced Angina', 'Oldpeak', 'Diet', 'Systolic BP', 
+                         'Diastolic BP', 'Sex_Female', 'Sex_Male']]
+
 if st.button('Predict'):
     prediction = model.predict(input_data)[0]
     st.write(f'The predicted heart attack risk is: {prediction}')
-
