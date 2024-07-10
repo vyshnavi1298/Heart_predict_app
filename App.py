@@ -46,6 +46,12 @@ input_data = input_data[['Age', 'Cholesterol', 'Max Heart Rate', 'Resting ECG',
                          'Exercise Induced Angina', 'Oldpeak', 'Diet', 'Systolic BP', 
                          'Diastolic BP', 'Sex_Female', 'Sex_Male']]
 
+# Ensure that the input data types match the training data
+input_data = input_data.astype(float)
+
 if st.button('Predict'):
-    prediction = model.predict(input_data)[0]
-    st.write(f'The predicted heart attack risk is: {prediction}')
+    try:
+        prediction = model.predict(input_data)[0]
+        st.write(f'The predicted heart attack risk is: {prediction}')
+    except ValueError as e:
+        st.write(f"Error: {e}")
