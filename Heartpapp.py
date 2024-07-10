@@ -1,85 +1,78 @@
 import streamlit as st
 import pandas as pd
+import numpy as np
 import pickle
+from sklearn.preprocessing import StandardScaler
+from sklearn.naive_bayes import GaussianNB
+from sklearn.pipeline import Pipeline
 
-# Load the trained model
-model_filename = 'naive_bayes_model.pkl'
-with open(model_filename, 'rb') as file:
-    model = pickle.load(file)
+# Load the model
+model_path = 'naive_bayes_model.pkl'
+with open(model_path, 'rb') as f:
+    model = pickle.load(f)
 
-# Assuming x_train is available and contains the correct columns
-# Define x_train with the correct columns from the training dataset
-x_train = pd.DataFrame(columns=['Age', 'Cholesterol', 'Smoking', 'Physical Activity', 'Diet', 'Stress', 'Sex_Female', 'Sex_Male', 'Systolic BP', 'Diastolic BP'])
+# Sample training columns
+training_columns = [
+    'Age', 'BMI', 'Cholesterol', 'Systolic BP', 'Diastolic BP', 'Physical Activity',
+    'Stress', 'Alcohol Consumption', 'Diabetes', 'Family History', 'Smoking', 
+    'Diet', 'Sex_Female', 'Sex_Male'
+]
 
-# Preprocessing function for prediction
+# Preprocessing function
 def preprocess_input(data):
-    data[['Systolic BP', 'Diastolic BP']] = data['Blood Pressure'].str.split('/', expand=True)
+    data = data.copy()
     data = data.drop(columns='Blood Pressure')
     data['Diet'] = data['Diet'].map({'Healthy': 1, 'Average': 2, 'Unhealthy': 3})
     data = pd.get_dummies(data, columns=['Sex'])
-    if 'Sex_Female' not in data.columns:
-        data['Sex_Female'] = 0
-    if 'Sex_Male' not in data.columns:
-        data['Sex_Male'] = 0
-    data[['Systolic BP', 'Diastolic BP']] = data[['Systolic BP', 'Diastolic BP']].astype(int)
-    for col in x_train.columns:
-        if col not in data.columns:
-            data[col] = 0
-    return data[x_train.columns]
+    data = data.reindex(columns=training_columns, fill_value=0)
+    return data
 
-# Streamlit App
-st.set_page_config(page_title='Heart Attack Risk Predictor', page_icon='❤️', layout='centered', initial_sidebar_state='auto')
+# Streamlit app
+def main():
+    st.title('Heart Attack Risk Prediction')
 
-# Background Style
-page_bg = '''
-<style>
-body {
-    background-color: #f0f2f6;
-    color: #333;
-}
-</style>
-'''
-st.markdown(page_bg, unsafe_allow_html=True)
+    age = st.slider('Age', 18, 100, 25)
+    bmi = st.slider('BMI', 10, 50, 22)
+    cholesterol = st.slider('Cholesterol', 100, 300, 150)
+    systolic_bp = st.slider('Systolic BP', 90, 200, 120)
+    diastolic_bp = st.slider('Diastolic BP', 60, 120, 80)
+    physical_activity = st.selectbox('Physical Activity', ['Low', 'Moderate', 'High'])
+    stress = st.selectbox('Stress', ['Low', 'Moderate', 'High'])
+    alcohol_consumption = st.selectbox('Alcohol Consumption', ['None', 'Occasional', 'Regular'])
+    diabetes = st.selectbox('Diabetes', ['No', 'Yes'])
+    family_history = st.selectbox('Family History of Heart Disease', ['No', 'Yes'])
+    smoking = st.selectbox('Smoking', ['No', 'Yes'])
+    diet = st.selectbox('Diet', ['Healthy', 'Average', 'Unhealthy'])
+    sex = st.selectbox('Sex', ['Male', 'Female'])
 
-# Title and Description
-st.title('Heart Attack Risk Predictor')
-st.markdown("""
-<div style="text-align: center; font-size: 20px;">
-    Predict your risk of heart attack with this simple app. Fill in the details below and click 'Predict' to see the result.
-</div>
-""", unsafe_allow_html=True)
-
-# Input Form
-st.subheader('Input Your Health Details')
-age = st.number_input('Age', min_value=1, max_value=120, value=45, step=1)
-sex = st.selectbox('Sex', ['Male', 'Female'])
-blood_pressure = st.text_input('Blood Pressure (Systolic/Diastolic)', value='120/80')
-cholesterol = st.number_input('Cholesterol', min_value=100, max_value=400, value=200, step=1)
-smoking = st.selectbox('Smoking', [0, 1], format_func=lambda x: 'Yes' if x == 1 else 'No')
-physical_activity = st.selectbox('Physical Activity', [0, 1], format_func=lambda x: 'Yes' if x == 1 else 'No')
-diet = st.selectbox('Diet', ['Healthy', 'Average', 'Unhealthy'])
-stress = st.selectbox('Stress', [0, 1], format_func=lambda x: 'Yes' if x == 1 else 'No')
-
-# Prediction
-if st.button('Predict'):
     input_data = {
         'Age': age,
-        'Sex': sex,
-        'Blood Pressure': blood_pressure,
+        'BMI': bmi,
         'Cholesterol': cholesterol,
-        'Smoking': smoking,
+        'Systolic BP': systolic_bp,
+        'Diastolic BP': diastolic_bp,
         'Physical Activity': physical_activity,
+        'Stress': stress,
+        'Alcohol Consumption': alcohol_consumption,
+        'Diabetes': diabetes,
+        'Family History': family_history,
+        'Smoking': smoking,
         'Diet': diet,
-        'Stress': stress
+        'Sex': sex
     }
+
     input_df = pd.DataFrame([input_data])
     preprocessed_data = preprocess_input(input_df)
     prediction = model.predict(preprocessed_data)
+
     st.write(f'## Predicted Heart Attack Risk: {"High" if prediction[0] == 1 else "Low"}')
 
-# Footer
-st.markdown("""
-<div style="text-align: center; font-size: 14px; margin-top: 50px;">
-    Developed by [Your Name]. Powered by Streamlit.
-</div>
-""", unsafe_allow_html=True)
+    # Footer
+    st.markdown("""
+        <div style="text-align: center; font-size: 14px; margin-top: 50px;">
+            Developed by [Your Name]. Powered by Streamlit.
+        </div>
+    """, unsafe_allow_html=True)
+
+if __name__ == '__main__':
+    main()
