@@ -1,74 +1,59 @@
 import streamlit as st
-import pandas as pd
-import numpy as np
 import pickle
+import numpy as np
 
-# Load the model
-model_path = 'naive_bayes_model.pkl'
-with open(model_path, 'rb') as f:
-    model = pickle.load(f)
-
-# Sample training columns
-training_columns = [
-    'Age', 'BMI', 'Cholesterol', 'Systolic BP', 'Diastolic BP', 'Physical Activity',
-    'Stress', 'Alcohol Consumption', 'Diabetes', 'Family History', 'Smoking', 
-    'Diet', 'Sex_Female', 'Sex_Male'
-]
-
-# Preprocessing function
-def preprocess_input(data):
-    data = data.copy()
-    data['Diet'] = data['Diet'].map({'Healthy': 1, 'Average': 2, 'Unhealthy': 3})
-    data = pd.get_dummies(data, columns=['Sex'])
-    data = data.reindex(columns=training_columns, fill_value=0)
-    return data
+# Load the trained model
+with open('trained_model.pkl', 'rb') as file:
+    model = pickle.load(file)
 
 # Streamlit app
-def main():
-    st.title('Heart Attack Risk Prediction')
+st.title('Heart Attack Prediction')
 
-    age = st.slider('Age', 18, 100, 25)
-    bmi = st.slider('BMI', 10, 50, 22)
-    cholesterol = st.slider('Cholesterol', 100, 300, 150)
-    systolic_bp = st.slider('Systolic BP', 90, 200, 120)
-    diastolic_bp = st.slider('Diastolic BP', 60, 120, 80)
-    physical_activity = st.selectbox('Physical Activity', ['Low', 'Moderate', 'High'])
-    stress = st.selectbox('Stress', ['Low', 'Moderate', 'High'])
-    alcohol_consumption = st.selectbox('Alcohol Consumption', ['None', 'Occasional', 'Regular'])
-    diabetes = st.selectbox('Diabetes', ['No', 'Yes'])
-    family_history = st.selectbox('Family History of Heart Disease', ['No', 'Yes'])
-    smoking = st.selectbox('Smoking', ['No', 'Yes'])
-    diet = st.selectbox('Diet', ['Healthy', 'Average', 'Unhealthy'])
-    sex = st.selectbox('Sex', ['Male', 'Female'])
+# Input features for prediction
+age = st.number_input('Age', min_value=0, max_value=120, value=30)
+cholesterol = st.number_input('Cholesterol', min_value=0, max_value=1000, value=200)
+heart_rate = st.number_input('Heart Rate', min_value=0, max_value=200, value=70)
+diabetes = st.selectbox('Diabetes', [0, 1])
+family_history = st.selectbox('Family History', [0, 1])
+smoking = st.selectbox('Smoking', [0, 1])
+obesity = st.selectbox('Obesity', [0, 1])
+alcohol_consumption = st.selectbox('Alcohol Consumption', [0, 1])
+exercise_hours_per_week = st.number_input('Exercise Hours Per Week', min_value=0.0, max_value=168.0, value=3.5)
+diet = st.selectbox('Diet', [1, 2, 3])  # 1=Healthy, 2=Average, 3=Unhealthy
+previous_heart_problems = st.selectbox('Previous Heart Problems', [0, 1])
+medication_use = st.selectbox('Medication Use', [0, 1])
+stress_level = st.number_input('Stress Level', min_value=0, max_value=10, value=5)
+sedentary_hours_per_day = st.number_input('Sedentary Hours Per Day', min_value=0.0, max_value=24.0, value=8.0)
+income = st.number_input('Income', min_value=0, max_value=1000000, value=50000)
+bmi = st.number_input('BMI', min_value=0.0, max_value=100.0, value=25.0)
+triglycerides = st.number_input('Triglycerides', min_value=0, max_value=1000, value=150)
+physical_activity_days_per_week = st.number_input('Physical Activity Days Per Week', min_value=0, max_value=7, value=3)
+sleep_hours_per_day = st.number_input('Sleep Hours Per Day', min_value=0, max_value=24, value=8)
+systolic_bp = st.number_input('Systolic BP', min_value=0, max_value=300, value=120)
+diastolic_bp = st.number_input('Diastolic BP', min_value=0, max_value=200, value=80)
+sex_female = st.selectbox('Sex', ['Female', 'Male'])
 
-    input_data = {
-        'Age': age,
-        'BMI': bmi,
-        'Cholesterol': cholesterol,
-        'Systolic BP': systolic_bp,
-        'Diastolic BP': diastolic_bp,
-        'Physical Activity': physical_activity,
-        'Stress': stress,
-        'Alcohol Consumption': alcohol_consumption,
-        'Diabetes': diabetes,
-        'Family History': family_history,
-        'Smoking': smoking,
-        'Diet': diet,
-        'Sex': sex
-    }
+# Convert Sex to dummy variables
+if sex_female == 'Female':
+    sex_female = 1
+    sex_male = 0
+else:
+    sex_female = 0
+    sex_male = 1
 
-    input_df = pd.DataFrame([input_data])
-    preprocessed_data = preprocess_input(input_df)
-    prediction = model.predict(preprocessed_data)
+# Create a numpy array for the input features
+input_features = np.array([[age, cholesterol, heart_rate, diabetes, family_history, smoking, obesity,
+                            alcohol_consumption, exercise_hours_per_week, diet, previous_heart_problems,
+                            medication_use, stress_level, sedentary_hours_per_day, income, bmi,
+                            triglycerides, physical_activity_days_per_week, sleep_hours_per_day,
+                            systolic_bp, diastolic_bp, sex_female, sex_male]])
 
-    st.write(f'## Predicted Heart Attack Risk: {"High" if prediction[0] == 1 else "Low"}')
+# Make prediction
+prediction = model.predict(input_features)
 
-    # Footer
-    st.markdown("""
-        <div style="text-align: center; font-size: 14px; margin-top: 50px;">
-            Developed by [Your Name]. Powered by Streamlit.
-        </div>
-    """, unsafe_allow_html=True)
-
-if __name__ == '__main__':
-    main()
+# Display prediction
+if st.button('Predict'):
+    if prediction[0] == 1:
+        st.write('The model predicts that the person is at risk of a heart attack.')
+    else:
+        st.write('The model predicts that the person is not at risk of a heart attack.')
